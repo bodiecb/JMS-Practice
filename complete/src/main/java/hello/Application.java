@@ -1,8 +1,16 @@
 
 package hello;
 
+import javax.annotation.Resource;
+import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Session;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
@@ -15,6 +23,10 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 @SpringBootApplication
 @EnableJms
@@ -38,7 +50,7 @@ public class Application {
         return converter;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
         // Launch the application
         ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
 
@@ -47,6 +59,36 @@ public class Application {
         // Send a message with a POJO - the template reuse the message converter
         System.out.println("Sending an email message.");
         jmsTemplate.convertAndSend("mailbox", new Email("info@example.com", "Hello"));
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String input = "";
+        String to = "";
+        String body = "";
+        Email email = null;
+
+
+
+        while(input != "n") {
+            System.out.println("Input: ");
+            input = br.readLine();
+            if(input.equals("s")) {
+                System.out.println("To: ");
+                to = br.readLine();
+                System.out.println("Body: ");
+                body = br.readLine();
+                jmsTemplate.convertAndSend("mailbox", new Email(to, body));
+            }
+            else if(input.equals("r")) {
+                Message message = jmsTemplate.receive("mailbox");
+                System.out.println(message.toString());
+            }
+            else {
+                input = "n";
+            }
+        }
+
+        System.out.println("All done!");
+
     }
 
 }
